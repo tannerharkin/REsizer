@@ -30,8 +30,32 @@ To use REsizer, follow these steps:
 3. **Execute the REsizer Script**:
 
    ```powershell
-   iwr https://raw.githubusercontent.com/tannerharkin/REsizer/main/REsizer.ps1 | iex
+   $uri='https://raw.githubusercontent.com/tannerharkin/REsizer/main/REsizer.ps1';$hash='968EDB783501BEB3B7AD980A6F4343AB3FED60CD295C588D3031217A6147651E';if((Get-FileHash -Algorithm SHA256 -InputStream (iwr $uri -UseBasicParsing).RawContentStream).Hash -eq $hash){iex (iwr $uri -UseBasicParsing).Content}else{Write-Error 'Hash mismatch'}
    ```
+
+   <details>
+       <summary><strong>Woah! That's a lot longer than the usual download and run one-liner, what is all that?</strong></summary>
+       <p>This command ensures that only an approved version of the script is executed, providing a security measure against unauthorized changes or potential hostile takeovers of the script repository (as unlikely as that would be). Here's what each part of the command does:</p>
+       <ul>
+           <li><strong>Set Variables:</strong> Sets <code>$uri</code> for the script URL and <code>$hash</code> for the expected SHA256 hash.</li>
+           <li><strong>Download the Script:</strong> Uses <code>Invoke-WebRequest (iwr)</code> to download the script once with <code>-UseBasicParsing</code>, which is necessary for older versions of PowerShell, and most Windows Server installs (we still don't recommend using REsizer on server!).</li>
+           <li><strong>Store Script Content:</strong> Stores the downloaded script content in a variable, reducing the risk of the script being tampered with between download and execution (mitigates a theoretical TOCTOU bug if we were to fetch twice).</li>
+           <li><strong>Hash Verification:</strong>
+               <ul>
+                   <li><code>Get-FileHash</code> computes the SHA256 hash of the stored script's content stream directly.</li>
+                   <li>Compares this computed hash with the expected hash, ensuring script integrity.</li>
+               </ul>
+           </li>
+           <li><strong>Conditional Execution:</strong>
+               <ul>
+                   <li>If the hashes match, the script is executed using <code>Invoke-Expression (iex)</code>.</li>
+                   <li>If there's a hash mismatch, an error is issued using <code>Write-Error</code>, preventing the execution of a potentially compromised script.</li>
+               </ul>
+           </li>
+       </ul>
+       <p>This approach ensures you always run the approved version of your script. If the script's content at the specified URL changes without a corresponding update to the expected hash in your command, the hash check will fail, and an error will be raised. This is particularly important if there's a potential hostile takeover of the repository hosting the script, as it safeguards against executing tampered code.</p>
+       <p><strong>TL;DR</strong> This is implemented as a security measure.</p>
+   </details>
 
 4. **Follow On-Screen Prompts**: The script will guide you through the necessary steps, asking for confirmations before making any changes.
 
